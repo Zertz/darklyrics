@@ -1,0 +1,32 @@
+{
+  "name": "darklyrics",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "preferGlobal": true,
+  "bin": "./bin/darklyrics",
+  "scripts": {
+    "lint": "standard --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zertz/darklyrics.git"
+  },
+  "author": "Pier-Luc Gendreau",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zertz/darklyrics/issues"
+  },
+  "homepage": "https://github.com/zertz/darklyrics#readme",
+  "devDependencies": {
+    "ava": "^0.18.2",
+    "standard": "^9.0.2"
+  },
+  "dependencies": {
+    "cheerio": "^0.22.0",
+    "console.table": "^0.8.0",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.0",
+    "yargs": "^7.0.2"
+  }
+}
