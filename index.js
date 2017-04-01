@@ -15,37 +15,13 @@ if (!album) {
 }
 
 (async function ({ band, album }) {
+  const ignoreWords = require('./ignore-words')
+
   function normalize (value) {
     return value.toLocaleLowerCase().replace(/\s/g, '').replace(/'/g, '')
   }
 
   const url = `http://www.darklyrics.com/lyrics/${normalize(band)}/${normalize(album)}.html`
-  const ignoreWords = [
-    'and',
-    'are',
-	'but',
-	'can',
-    'for',
-    'have',
-    'his',
-	'how',
-	'it\'s',
-    'our',
-	'that',
-    'the',
-	'there',
-	'there\'s',
-    'they',
-    'this',
-    'was',
-	'what',
-	'when',
-	'where',
-    'will',
-    'with',
-    'you',
-    'your'
-  ]
 
   console.info(`\nLooking up ${url}\n`)
   console.time(`${band} - ${album}`)
