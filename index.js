@@ -24,6 +24,7 @@ if (!band) {
     const filteredWords = getFilteredWords({ wordMap })
     const topWords = getTopWords({ wordMap, filteredWords })
 
+    console.info()
     console.table(topWords)
   } else {
     const albums = await getBandAlbums({ band })
