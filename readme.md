@@ -10,6 +10,8 @@ npm install darklyrics -g
 
 ## usage
 
+> requires [node](https://nodejs.org/) >= 7.6
+
 ### input
 
 ```
