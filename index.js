@@ -19,31 +19,24 @@ if (!band) {
 }
 
 (async function ({ band, album }) {
-  if (album) {
-    const wordMap = await getAlbumWordMap({ band, album })
-    const filteredWords = getFilteredWords({ wordMap })
-    const topWords = getTopWords({ wordMap, filteredWords })
-
-    console.info()
-    console.table(topWords)
-  } else {
+  const wordMap = album ? await getAlbumWordMap({ band, album }) : await (async () => {
     const albums = await getBandAlbums({ band })
     const albumWordMaps = await Promise.all(albums.map(async (album) => await getAlbumWordMap({ band, album })))
 
-    const wordMap = albumWordMaps.reduce((wordMap, albumWordMap) => {
+    return albumWordMaps.reduce((wordMap, albumWordMap) => {
       Object.keys(albumWordMap).forEach((word) => {
         wordMap[word] = (wordMap[word] || 0) + albumWordMap[word]
       })
 
       return wordMap
     }, {})
+  })()
 
-    const filteredWords = getFilteredWords({ wordMap })
-    const topWords = getTopWords({ wordMap, filteredWords })
+  const filteredWords = getFilteredWords({ wordMap })
+  const topWords = getTopWords({ wordMap, filteredWords })
 
-    console.info()
-    console.table(topWords)
-  }
+  console.info()
+  console.table(topWords)
 })({ band, album })
 
 async function getBandAlbums ({ band }) {
