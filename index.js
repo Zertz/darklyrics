@@ -1,3 +1,5 @@
+require('console.table')
+
 const cheerio = require('cheerio')
 const mollusc = require('mollusc')
 const pluralize = require('pluralize')
@@ -6,7 +8,9 @@ const argv = require('yargs').argv
 
 const ignoreWords = require('./ignore-words')
 
-require('console.table')
+const molluscOptions = {
+  replacement: ''
+}
 
 const { band, album } = argv
 
@@ -14,21 +18,58 @@ if (!band) {
   throw new Error('missing parameter --band')
 }
 
-if (!album) {
-  throw new Error('missing parameter --album')
+(async function ({ band, album }) {
+  if (album) {
+    const wordMap = await getAlbumWordMap({ band, album })
+    const filteredWords = getFilteredWords({ wordMap })
+    const topWords = getTopWords({ wordMap, filteredWords })
+
+    console.table(topWords)
+  } else {
+    const albums = await getBandAlbums({ band })
+    const albumWordMaps = await Promise.all(albums.map(async (album) => await getAlbumWordMap({ band, album })))
+
+    const wordMap = albumWordMaps.reduce((wordMap, albumWordMap) => {
+      Object.keys(albumWordMap).forEach((word) => {
+        wordMap[word] = (wordMap[word] || 0) + albumWordMap[word]
+      })
+
+      return wordMap
+    }, {})
+
+    const filteredWords = getFilteredWords({ wordMap })
+    const topWords = getTopWords({ wordMap, filteredWords })
+
+    console.info()
+    console.table(topWords)
+  }
+})({ band, album })
+
+async function getBandAlbums ({ band }) {
+  const bandSlug = mollusc(band, molluscOptions)
+
+  const url = `http://www.darklyrics.com/${bandSlug[0]}/${bandSlug}.html`
+
+  console.info(`Looking up ${url}`)
+  console.time(band)
+
+  const response = await request.get(url)
+  const $ = cheerio.load(response)
+
+  const albums = $('div.album h2 strong').text().split('""').map((album) => album.replace(/"/g, ''))
+
+  console.timeEnd(band)
+
+  return albums
 }
 
-(async function ({ band, album }) {
-  const molluscOptions = {
-    replacement: ''
-  }
-
+async function getAlbumWordMap ({ band, album }) {
   const bandSlug = mollusc(band, molluscOptions)
   const albumSlug = mollusc(album, molluscOptions)
 
   const url = `http://www.darklyrics.com/lyrics/${bandSlug}/${albumSlug}.html`
 
-  console.info(`\nLooking up ${url}\n`)
+  console.info(`Looking up ${url}`)
   console.time(`${band} - ${album}`)
 
   const response = await request.get(url)
@@ -43,15 +84,23 @@ if (!album) {
     wordMap[slug] = (wordMap[slug] || 0) + 1
   })
 
-  const filteredWords = Object.keys(wordMap).filter((word) => {
+  console.timeEnd(`${band} - ${album}`)
+
+  return wordMap
+}
+
+function getFilteredWords ({ wordMap }) {
+  return Object.keys(wordMap).filter((word) => {
     if (word.startsWith('[') && word.endsWith(']')) {
       return false
     }
 
     return word.length > 2 && wordMap[word] > 2 && ignoreWords.indexOf(word) === -1
   })
+}
 
-  const words = filteredWords.map((word, i) => {
+function getTopWords ({ wordMap, filteredWords }) {
+  return filteredWords.map((word, i) => {
     const related = filteredWords.filter((w) => {
       return w !== word && (w.indexOf(word) === 0 || word.indexOf(w) === 0)
     }).reduce((value, word) => {
@@ -70,8 +119,4 @@ if (!album) {
   }).filter((word, i) => i < 25).map((word, i) => Object.assign({
     rank: i + 1
   }, word))
-
-  console.table(words)
-
-  console.timeEnd(`${band} - ${album}`)
-})({ band, album })
+}
