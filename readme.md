@@ -23,30 +23,30 @@ darklyrics --band "Twilight Force" --album "Heroes of Mighty Magic"
 ```
 Looking up http://www.darklyrics.com/lyrics/twilightforce/heroesofmightymagic.html
 
-rank  word     count
-----  -------  -----
-1     over     37
-2     might    37
-3     time     29
-4     ride     28
-5     far      26
-6     magic    25
-7     through  24
-8     light    24
-9     power    23
-10    rise     22
-11    again    22
-12    fly      20
-13    skies    18
-14    mighty   18
-15    dragon   16
-16    hope     15
-17    glory    15
-18    seas     13
-19    bright   13
-20    away     13
+rank  word      count  related
+----  --------  -----  -----------
+1     might     40     mighty (18)
+2     over      37
+3     time      29
+4     ride      28     riders (8)
+5     far       26
+6     magic     25
+7     through   24
+8     light     24
+9     again     23
+10    power     23
+11    rise      22
+12    twilight  21
+13    fly       20
+14    skies     18
+15    mighty    18     might (40)
+16    glory     16
+17    dragon    16     dragons (6)
+18    hope      15
+19    stars     14     star (8)
+20    bright    13
 
-Twilight Force - Heroes of Mighty Magic: 336.341ms
+Twilight Force - Heroes of Mighty Magic: 336.284ms
 ```
 
 ## license
