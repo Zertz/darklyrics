@@ -1,6 +1,13 @@
 const cheerio = require('cheerio')
+const mollusc = require('mollusc')
 const request = require('request-promise')
 const argv = require('yargs').argv
+
+const ignoreWords = require('./ignore-words')
+
+const molluscOptions = {
+  replacement: ''
+}
 
 require('console.table')
 
@@ -15,13 +22,10 @@ if (!album) {
 }
 
 (async function ({ band, album }) {
-  const ignoreWords = require('./ignore-words')
+  const bandSlug = mollusc(band, molluscOptions)
+  const albumSlug = mollusc(album, molluscOptions)
 
-  function normalize (value) {
-    return value.toLocaleLowerCase().replace(/\s/g, '').replace(/'/g, '')
-  }
-
-  const url = `http://www.darklyrics.com/lyrics/${normalize(band)}/${normalize(album)}.html`
+  const url = `http://www.darklyrics.com/lyrics/${bandSlug}/${albumSlug}.html`
 
   console.info(`\nLooking up ${url}\n`)
   console.time(`${band} - ${album}`)
@@ -33,15 +37,36 @@ if (!album) {
   const wordMap = {}
 
   lyrics.split(' ').forEach((word) => {
-    wordMap[word] = (wordMap[word] || 0) + 1
+    if (!word.startsWith('[') && !word.endsWith(']')) {
+      const slug = mollusc(word, molluscOptions)
+
+      wordMap[slug] = (wordMap[slug] || 0) + 1
+    }
   })
 
-  const words = Object.keys(wordMap).filter((word) => {
+  const filteredWords = Object.keys(wordMap).filter((word) => {
+    if (word.startsWith('[') && word.endsWith(']')) {
+      return false
+    }
+
     return word.length > 2 && wordMap[word] > 2 && ignoreWords.indexOf(word) === -1
-  }).map((word, i) => ({
-    word,
-    count: wordMap[word]
-  })).sort((a, b) => b.count - a.count).filter((word, i) => i < 20).map((word, i) => Object.assign({
+  })
+
+  const words = filteredWords.map((word, i) => {
+    const related = filteredWords.filter((w) => {
+      return w !== word && (w.indexOf(word) === 0 || word.indexOf(w) === 0)
+    }).reduce((value, word) => {
+      const currentValue = `${word} (${wordMap[word]})`
+
+      return value.length === 0 ? currentValue : `${value}, ${currentValue}`
+    }, '')
+
+    return {
+      word,
+      count: wordMap[word],
+      related
+    }
+  }).sort((a, b) => b.count - a.count).filter((word, i) => i < 20).map((word, i) => Object.assign({
     rank: i + 1
   }, word))
 

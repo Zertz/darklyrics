@@ -25,6 +25,7 @@
   "dependencies": {
     "cheerio": "^0.22.0",
     "console.table": "^0.8.0",
+    "mollusc": "^1.1.0",
     "request": "^2.81.0",
     "request-promise": "^4.2.0",
     "yargs": "^7.0.2"
