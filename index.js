@@ -1,13 +1,10 @@
 const cheerio = require('cheerio')
 const mollusc = require('mollusc')
+const pluralize = require('pluralize')
 const request = require('request-promise')
 const argv = require('yargs').argv
 
 const ignoreWords = require('./ignore-words')
-
-const molluscOptions = {
-  replacement: ''
-}
 
 require('console.table')
 
@@ -22,6 +19,10 @@ if (!album) {
 }
 
 (async function ({ band, album }) {
+  const molluscOptions = {
+    replacement: ''
+  }
+
   const bandSlug = mollusc(band, molluscOptions)
   const albumSlug = mollusc(album, molluscOptions)
 
@@ -37,11 +38,9 @@ if (!album) {
   const wordMap = {}
 
   lyrics.split(' ').forEach((word) => {
-    if (!word.startsWith('[') && !word.endsWith(']')) {
-      const slug = mollusc(word.endsWith('\'s') ? word.substring(0, word.length - 2) : word, molluscOptions)
+    const slug = pluralize.singular(word.endsWith('\'s') ? word.substring(0, word.length - 2) : word).toLocaleLowerCase()
 
-      wordMap[slug] = (wordMap[slug] || 0) + 1
-    }
+    wordMap[slug] = (wordMap[slug] || 0) + 1
   })
 
   const filteredWords = Object.keys(wordMap).filter((word) => {
@@ -66,7 +65,9 @@ if (!album) {
       count: wordMap[word],
       related
     }
-  }).sort((a, b) => b.count - a.count).filter((word, i) => i < 20).map((word, i) => Object.assign({
+  }).sort((a, b) => {
+    return b.count === a.count ? a.word.localeCompare(b.word) : b.count - a.count
+  }).filter((word, i) => i < 25).map((word, i) => Object.assign({
     rank: i + 1
   }, word))
 
