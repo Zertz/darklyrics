@@ -38,7 +38,7 @@ if (!album) {
 
   lyrics.split(' ').forEach((word) => {
     if (!word.startsWith('[') && !word.endsWith(']')) {
-      const slug = mollusc(word, molluscOptions)
+      const slug = mollusc(word.endsWith('\'s') ? word.substring(0, word.length - 2) : word, molluscOptions)
 
       wordMap[slug] = (wordMap[slug] || 0) + 1
     }
