@@ -1,10 +1,11 @@
 require('console.table')
 
+const argv = require('yargs').argv
 const cheerio = require('cheerio')
 const mollusc = require('mollusc')
 const pluralize = require('pluralize')
 const request = require('request-promise')
-const argv = require('yargs').argv
+const url = require('url')
 
 const ignoreWords = require('./ignore-words')
 
@@ -18,10 +19,20 @@ if (!band) {
   throw new Error('missing parameter --band')
 }
 
+function delay (ms) {
+  return new Promise((resolve, reject) => setTimeout(() => resolve(), ms))
+}
+
 (async function ({ band, album }) {
   const wordMap = album ? await getAlbumWordMap({ band, album }) : await (async () => {
     const albums = await getBandAlbums({ band })
-    const albumWordMaps = await Promise.all(albums.map(async (album) => await getAlbumWordMap({ band, album })))
+    const albumWordMaps = await Promise.all(albums.map(async (album, i) => {
+      await delay(i * 1500)
+
+      return await getAlbumWordMap({
+        albumUrl: album.url
+      })
+    }))
 
     return albumWordMaps.reduce((wordMap, albumWordMap) => {
       Object.keys(albumWordMap).forEach((word) => {
@@ -39,34 +50,45 @@ if (!band) {
   console.table(topWords)
 })({ band, album })
 
-async function getBandAlbums ({ band }) {
-  const bandSlug = mollusc(band, molluscOptions)
+async function getBandAlbums ({ band, bandUrl }) {
+  bandUrl = bandUrl || (() => {
+    const bandSlug = mollusc(band, molluscOptions)
 
-  const url = `http://www.darklyrics.com/${bandSlug[0]}/${bandSlug}.html`
+    return `http://www.darklyrics.com/${bandSlug[0]}/${bandSlug}.html`
+  })()
 
-  console.info(`Looking up ${url}`)
+  console.info(`Looking up ${bandUrl}`)
   console.time(band)
 
-  const response = await request.get(url)
+  const response = await request.get(bandUrl)
   const $ = cheerio.load(response)
 
-  const albums = $('div.album h2 strong').text().split('""').map((album) => album.replace(/"/g, ''))
+  const albums = $('div.album').toArray().map((album) => {
+    const href = $(album).find('a').first().attr('href')
+
+    return {
+      title: $(album).find('h2 strong').text().replace(/"/g, ''),
+      url: url.resolve(bandUrl, href.substring(0, href.indexOf('#')))
+    }
+  });
 
   console.timeEnd(band)
 
   return albums
 }
 
-async function getAlbumWordMap ({ band, album }) {
-  const bandSlug = mollusc(band, molluscOptions)
-  const albumSlug = mollusc(album, molluscOptions)
+async function getAlbumWordMap ({ band, album, albumUrl }) {
+  albumUrl = albumUrl || (() => {
+    const bandSlug = mollusc(band, molluscOptions)
+    const albumSlug = mollusc(album, molluscOptions)
 
-  const url = `http://www.darklyrics.com/lyrics/${bandSlug}/${albumSlug}.html`
+    return `http://www.darklyrics.com/lyrics/${bandSlug}/${albumSlug}.html`
+  })()
 
-  console.info(`Looking up ${url}`)
+  console.info(`Looking up ${albumUrl}`)
   console.time(`${band} - ${album}`)
 
-  const response = await request.get(url)
+  const response = await request.get(albumUrl)
   const $ = cheerio.load(response)
 
   const lyrics = $('div.lyrics').text().toLocaleLowerCase().replace(/\s/g, ' ').replace(/!|\?|,|\./g, '')
