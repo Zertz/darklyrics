@@ -57,8 +57,7 @@ async function getBandAlbums ({ band, bandUrl }) {
     return `http://www.darklyrics.com/${bandSlug[0]}/${bandSlug}.html`
   })()
 
-  console.info(`Looking up ${bandUrl}`)
-  console.time(band)
+  console.time(bandUrl)
 
   const response = await request.get(bandUrl)
   const $ = cheerio.load(response)
@@ -72,7 +71,7 @@ async function getBandAlbums ({ band, bandUrl }) {
     }
   });
 
-  console.timeEnd(band)
+  console.timeEnd(bandUrl)
 
   return albums
 }
@@ -85,8 +84,7 @@ async function getAlbumWordMap ({ band, album, albumUrl }) {
     return `http://www.darklyrics.com/lyrics/${bandSlug}/${albumSlug}.html`
   })()
 
-  console.info(`Looking up ${albumUrl}`)
-  console.time(`${band} - ${album}`)
+  console.timeEnd(albumUrl)
 
   const response = await request.get(albumUrl)
   const $ = cheerio.load(response)
@@ -100,7 +98,7 @@ async function getAlbumWordMap ({ band, album, albumUrl }) {
     wordMap[slug] = (wordMap[slug] || 0) + 1
   })
 
-  console.timeEnd(`${band} - ${album}`)
+  console.timeEnd(albumUrl)
 
   return wordMap
 }
